@@ -104,3 +104,6 @@ ehthumbs.db
 
 # VS Code settings
 .vscode/
+
+#Cred file
+credentials.json
