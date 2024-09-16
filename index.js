@@ -4,11 +4,13 @@ const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const photos = require('googlephotos');
 
 const app = express();
 const port = 3000;
 
-app.listen(port, () => {
+app.listen(port, async () => {
+  await authorize();
   console.log(`Server listening on port http://localhost:${port}`);
 });
 
@@ -17,7 +19,28 @@ app.get('/api/healthcheck', (req, res) => {
 });
 
 // Set up multer for file uploads
-const upload = multer({ dest: 'uploads/' });
+const uploadDir = 'uploads/';
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    console.log("File: ", file);
+    var fileName = "defaultFileName";
+    const fileExt = ".jpg";
+
+    if (file.originalname) {
+      fileName = file.originalname;
+    } else {
+      const uniqueSuffix = Date.now() + "_" + Math.round(Math.random() * 1e9);
+      fileName = file.fieldname + "_" + uniqueSuffix + fileExt;
+    }
+
+    console.log("Saving to fileName: " + fileName);
+    cb(null, fileName);
+  }
+})
+const upload = multer({ storage: storage, preservePath: true });
 
 // Load Google OAuth2 credentials
 const CREDENTIALS_PATH = path.join(__dirname, 'credentials.json');
@@ -39,29 +62,30 @@ async function authorize() {
         // Get and store new token (manual step)
         const authUrl = oAuth2Client.generateAuthUrl({ access_type: 'offline', scope: SCOPES });
         console.log('Authorize this app by visiting this url:', authUrl);
-        // Add code here to handle the authorization manually and store the token
     }
     authClient = oAuth2Client;
 }
 
 app.post('/api/upload', upload.single('photo'), async (req, res) => {
-  console.log("[UPLOAD API] called")
-    try {
-        const filePath = req.file.path;
+  console.log("[UPLOAD API] called: ", req.body);
+  console.log("Uploaded: ", req.file);
+  res.status(200).json({ success: true });
+    // try {
+    //     const filePath = req.file.path;
 
-        if (!authClient) await authorize();
+    //     if (!authClient) await authorize();
 
-        const mediaItemId = await uploadPhoto(authClient, filePath, ALBUM_ID);
+    //     const mediaItemId = await uploadPhoto(authClient, filePath, ALBUM_ID);
 
-        res.status(200).json({ success: true, mediaItemId });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, error: error.message });
-    } finally {
-        fs.unlink(req.file.path, (err) => {
-            if (err) console.error('Failed to delete temporary file:', err);
-        });
-    }
+    //     res.status(200).json({ success: true, mediaItemId });
+    // } catch (error) {
+    //     console.error(error);
+    //     res.status(500).json({ success: false, error: error.message });
+    // } finally {
+    //     fs.unlink(req.file.path, (err) => {
+    //         if (err) console.error('Failed to delete temporary file:', err);
+    //     });
+    // }
 });
 
 app.get('/auth/google/callback', async (req, res) => {
@@ -91,7 +115,7 @@ async function uploadPhoto(authClient, filePath, albumId) {
     const uploadToken = await getUploadToken(authClient, filePath);
 
     // Step 2: Use the upload token to create a media item
-    const mediaItemId = await createMediaItem(authClient, uploadToken, albumId);
+    const mediaItemId = await createMediaItem(authClient, uploadToken, albumId, fileName);
 
     return mediaItemId;
 }
@@ -99,28 +123,40 @@ async function uploadPhoto(authClient, filePath, albumId) {
 async function getUploadToken(authClient, filePath) {
     const fileStream = fs.createReadStream(filePath);
     const fileSize = fs.statSync(filePath).size;
+    const mimeType = 'image/jpeg';
 
-    const response = await axios.post('https://photoslibrary.googleapis.com/v1/uploads', fileStream, {
-        headers: {
-            'Authorization': `Bearer ${authClient.credentials.access_token}`,
-            'Content-Type': 'application/octet-stream',
-            'X-Goog-Upload-File-Name': path.basename(filePath),
-            'X-Goog-Upload-Protocol': 'raw',
-            'Content-Length': fileSize
-        }
-    });
+    try {
+      const response = await axios.post('https://photoslibrary.googleapis.com/v1/uploads', fileStream, {
+          headers: {
+              'Authorization': `Bearer ${authClient.credentials.access_token}`,
+              'Content-Type': 'application/octet-stream',
+              'X-Goog-Upload-Content-Type': mimeType,
+              //'X-Goog-Upload-File-Name': path.basename(filePath),
+              'X-Goog-Upload-Protocol': 'raw',
+              'Content-Length': fileSize
+          }
+      });
 
-    return response.data;  // This is the upload token
+      const uploadToken = response.data;
+      console.log("Upload Token: " + uploadToken);
+      return uploadToken;
+  } catch (error) {
+    console.error('Error uploading photo:', error);
+    throw error;
+  }
 }
 
-async function createMediaItem(authClient, uploadToken, albumId) {
+async function createMediaItem(authClient, uploadToken, albumId, fileName) {
+  try {
     const response = await axios.post('https://photoslibrary.googleapis.com/v1/mediaItems:batchCreate', {
         albumId: albumId,
         newMediaItems: [
             {
-                simpleMediaItem: {
-                    uploadToken: uploadToken
-                }
+              description: 'Photo booth picture',
+              simpleMediaItem: {
+                  fileName: 'photo1.jpg', //fileName,
+                  uploadToken: uploadToken
+              }
             }
         ]
     }, {
@@ -132,8 +168,13 @@ async function createMediaItem(authClient, uploadToken, albumId) {
 
     const mediaItemResult = response.data.newMediaItemResults[0];
     if (mediaItemResult.status && mediaItemResult.status.code === 0) {
+      console.log("Upload Media : " + JSON.stringify(mediaItemResult));
         return mediaItemResult.mediaItem.id;
     } else {
         throw new Error('Error creating media item: ' + mediaItemResult.status.message);
     }
+  } catch (error) {
+    console.error('Error uploading photo media:', error);
+    throw error;
+  }
 }
