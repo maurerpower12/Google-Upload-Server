@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "clean": "rm -rd dist"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +16,7 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "googleapis": "^140.0.1",
+    "googlephotos": "^0.3.5",
     "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
