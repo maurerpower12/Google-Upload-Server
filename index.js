@@ -5,10 +5,28 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const photos = require('googlephotos');
+const { exec } = require('child_process');
 
 const app = express();
 const port = 3000;
 
+const openBroswer = (url) => {
+  const startCmd = {
+    darwin: 'open', //macOS
+    win32: 'start', // windows
+    linux: 'xdg-open' // linux
+  }[process.platform]
+
+  if (startCmd) {
+    exec(`${startCmd} ${url}`, (error) => {
+      if (error) {
+        console.error('Failed to open broswer to: ', url, error);
+      }
+    });
+  } else {
+    console.error('Platform not supported');
+  }
+}
 app.listen(port, async () => {
   await authorize();
   console.log(`Server listening on port http://localhost:${port}`);
@@ -62,6 +80,7 @@ async function authorize() {
         // Get and store new token (manual step)
         const authUrl = oAuth2Client.generateAuthUrl({ access_type: 'offline', scope: SCOPES });
         console.log('Authorize this app by visiting this url:', authUrl);
+        openBroswer(authUrl);
     }
     authClient = oAuth2Client;
 }
@@ -123,7 +142,7 @@ async function uploadPhoto(authClient, filePath, albumId) {
 async function getUploadToken(authClient, filePath) {
     const fileStream = fs.createReadStream(filePath);
     const fileSize = fs.statSync(filePath).size;
-    const mimeType = 'image/jpeg';
+    const mimeType = 'image/png';
 
     try {
       const response = await axios.post('https://photoslibrary.googleapis.com/v1/uploads', fileStream, {
