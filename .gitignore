@@ -108,6 +108,7 @@ ehthumbs.db
 #Cred file
 credentials.json
 token.json
+dropboxToken.json
 
 #uploads folder
 /uploads
