@@ -1,8 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const { Dropbox } = require('dropbox'); // Import Dropbox SDK
-const fetch = require('isomorphic-fetch'); // Required for Dropbox SDK
-const { openBrowser } = require('./Utilities'); // Keep utility for opening browser for OAuth flow
 
 const TOKEN_PATH = 'dropboxToken.json';
 
