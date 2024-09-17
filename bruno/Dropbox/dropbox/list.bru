@@ -1,0 +1,25 @@
+meta {
+  name: list
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://api.dropboxapi.com/2/file_requests/list_v2
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+      "limit": 1000
+  }
+}
