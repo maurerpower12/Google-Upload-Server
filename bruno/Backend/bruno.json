@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "name": "API",
+  "name": "GooglePhotos",
   "type": "collection",
   "ignore": [
     "node_modules",
