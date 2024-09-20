@@ -32,12 +32,14 @@ To get up and running, follow these steps:
 ```bash
    npm install
 ```
-4. Create the needed local files. See local files section below
+4. Create the needed local files. See [local files section](#local-files) below
 5. Configure your remote provider (see `const provider = backendOptions.Dropbox;` in index.js)
 5. Start the application
 ```bash
    npm run start
 ```
+6. Follow the authentication flow (see [Authentication Section](#authentication))
+7. Go to [http://localhost:3000/api/healthcheck](http://localhost:3000/api/healthcheck) in your browser and you should see the text `OK`
 
 
 ## Local Files
@@ -55,6 +57,13 @@ To work with remote providers (like Dropbox) there are files that need to be gen
         "REDIRECT_URI": "http://localhost:3000/auth/dropbox/callback"
     }
     ```
+
+## Authentication
+
+When the server boots - it needs premissions to upload content.
+1. A dropbox webpage should auto open
+2. You will need to hit "Continue"
+3. And then "Allow"
 
 ## Contributing
 
