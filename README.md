@@ -36,7 +36,7 @@ To get up and running, follow these steps:
 5. Configure your remote provider (see `const provider = backendOptions.Dropbox;` in index.js)
 5. Start the application
 ```bash
-   npm install
+   npm run start
 ```
 
 
