@@ -26,45 +26,50 @@ This project is the backend for a locally running Photo Booth application. The p
 ## Installation
 
 To get up and running, follow these steps:
+
 1. [Download and install Node.js](https://nodejs.org/)
 2. [Git clone this repo](https://github.com/maurerpower12/Photobooth-Backend)
 3. Install the required dependencies:
+
 ```bash
    npm install
 ```
+
 4. Create the needed local files. See [local files section](#local-files) below
 5. Configure your remote provider (see `const provider = backendOptions.Dropbox;` in index.js)
-5. Start the application
+6. Start the application
+
 ```bash
    npm run start
 ```
+
 6. Follow the authentication flow (see [Authentication Section](#authentication))
 7. Go to [http://localhost:3000/api/healthcheck](http://localhost:3000/api/healthcheck) in your browser and you should see the text `OK`
-
 
 ## Local Files
 
 To work with remote providers (like Dropbox) there are files that need to be generated:
+
 1. `./dropboxToken.json`
-    - This file is generated for you! It will contain your acess token. DO NOT SHARE OR UPLOAD!
+   - This file is generated for you! It will contain your acess token. DO NOT SHARE OR UPLOAD!
 2. `./dropboxCredentials.json`
-    - This file contains constants that can be found on [developer console](https://www.dropbox.com/developers/)
-    - Here is a sample structure:
-    ```json
-    {
-        "DROPBOX_APP_KEY": "1234",
-        "DROPBOX_APP_SECRET": "5678",
-        "REDIRECT_URI": "http://localhost:3000/auth/dropbox/callback"
-    }
-    ```
+   - This file contains constants that can be found on [developer console](https://www.dropbox.com/developers/)
+   - Here is a sample structure:
+   ```json
+   {
+     "DROPBOX_APP_KEY": "1234",
+     "DROPBOX_APP_SECRET": "5678",
+     "REDIRECT_URI": "http://localhost:3000/auth/dropbox/callback"
+   }
+   ```
 
 ## Authentication
 
 When the server boots - it needs premissions to upload content.
+
 1. A dropbox webpage should auto open
 2. You will need to hit "Continue"<img width="1532" alt="Screenshot 2024-09-19 at 11 32 05 PM" src="https://github.com/user-attachments/assets/e241dc22-2cb3-47e1-9fa7-5df2418fb9da">
 3. And then "Allow" <img width="1535" alt="Screenshot 2024-09-19 at 11 32 43 PM" src="https://github.com/user-attachments/assets/2f6202a0-5542-4ddf-8f99-31fb8ef205c6">
-
 
 ## Contributing
 
@@ -80,6 +85,7 @@ If you'd like to contribute to this project, please follow these steps:
 ## License
 
 This project is licensed under the [MIT License](https://opensource.org/license/mit).
+
 ```
 Copyright 2024 Joseph Maurer
 

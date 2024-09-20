@@ -10,6 +10,7 @@ const CREDENTIALS_PATH = path.join(__dirname, "dropboxCredentials.json");
 let DROPBOX_APP_KEY;
 let DROPBOX_APP_SECRET;
 let REDIRECT_URI;
+let TOKEN_DATA;
 
 // Upload a file to Dropbox
 async function uploadToDropbox(filePath) {
@@ -26,9 +27,40 @@ async function uploadToDropbox(filePath) {
     });
 
     console.log("File uploaded successfully:", response.result);
+    return getShareableLinkToFile(dropboxClient, "/" + fileName);
   } catch (err) {
     console.error("Failed to upload file:", err.message);
-    throw err;
+    return "";
+  }
+}
+
+async function getShareableLinkToFile(dropbox, dropboxPath) {
+  try {
+    const response = await dropbox.sharingCreateSharedLinkWithSettings({
+      path: dropboxPath
+    });
+
+    console.log("Link to file:", response.result.url);
+    return response.result.url;
+  } catch (err) {
+    console.error("Failed to get file link:", err);
+    return ""; // TODO: Maybe return a generic link here?
+  }
+}
+
+// Initialize Dropbox client with access token (if available)
+async function initializeDropboxClient() {
+  if (fs.existsSync(TOKEN_PATH)) {
+    const savedToken = fs.readFileSync(TOKEN_PATH, "utf8");
+    const obj = JSON.parse(savedToken);
+    if (checkTokenValidity(obj.response.access_token) === true) {
+      TOKEN_DATA = obj;
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
   }
 }
 
@@ -36,6 +68,11 @@ async function uploadToDropbox(filePath) {
 async function authorizeDropbox(req, res) {
   try {
     await populateCredentials();
+    const cachedToken = initializeDropboxClient();
+    if (cachedToken === true) {
+      return;
+    }
+
     const dropbox = new DropboxAuth({
       clientId: DROPBOX_APP_KEY,
       clientSecret: DROPBOX_APP_SECRET,
@@ -85,7 +122,8 @@ async function dropboxCallback(req, res) {
 
     const currentTimeInSeconds = Math.floor(Date.now() / 1000);
     const newExpiresAt = currentTimeInSeconds + response.result.expires_in;
-    fs.writeFileSync(TOKEN_PATH, JSON.stringify({response: response.result, expires_at: newExpiresAt}));
+    TOKEN_DATA = { response: response.result, expires_at: newExpiresAt };
+    fs.writeFileSync(TOKEN_PATH, JSON.stringify(TOKEN_DATA));
 
     console.log("Access Token saved:", accessToken);
 
@@ -100,12 +138,9 @@ async function dropboxCallback(req, res) {
 // Function to refresh the token if expired
 async function refreshTokenIfNeeded() {
   try {
-    // Load token data from file (this contains access_token, refresh_token, expires_in, etc.)
-    const tokenData = JSON.parse(fs.readFileSync(TOKEN_PATH, "utf-8"));
-    const { response, expires_at } = tokenData;
+    const { response, expires_at } = TOKEN_DATA;
 
-    const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-    if (currentTimeInSeconds >= expires_at) {
+    if (!checkTokenValidity(response.access_token)) {
       console.log("Access token expired. Refreshing token...");
 
       // Initialize DropboxAuth with client credentials
@@ -122,14 +157,15 @@ async function refreshTokenIfNeeded() {
       const newExpiresIn = refreshResponse.result.expires_in;
 
       // Calculate the new expiration time
+      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
       const newExpiresAt = currentTimeInSeconds + newExpiresIn;
 
       // Update the token data and save it back to the file
-      const updatedTokenData = {
+      TOKEN_DATA = {
         response: refreshResponse.result,
         expires_at: newExpiresAt,
       };
-      fs.writeFileSync(TOKEN_PATH, JSON.stringify(updatedTokenData));
+      fs.writeFileSync(TOKEN_PATH, JSON.stringify(TOKEN_DATA));
 
       console.log(
         "Token refreshed successfully. New access token:",
@@ -144,6 +180,27 @@ async function refreshTokenIfNeeded() {
     }
   } catch (error) {
     console.error("Error refreshing token:", error);
+  }
+}
+
+// Function to check if the access token is still valid by making a simple API call
+async function checkTokenValidity(accessToken) {
+  const dropbox = new Dropbox({
+    accessToken: accessToken,
+    fetch: fetch,
+  });
+
+  try {
+    // Make an API call to get the current account information
+    const response = await dropbox.usersGetCurrentAccount();
+    return true;
+  } catch (error) {
+    if (error.status === 401) {
+      console.log("Access token is invalid or expired.");
+    } else {
+      console.log("An error occurred:", error);
+    }
+    return false;
   }
 }
 
