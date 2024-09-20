@@ -208,10 +208,19 @@ async function checkTokenValidity(accessToken) {
 async function populateCredentials() {
   if (!DROPBOX_APP_KEY || !DROPBOX_APP_SECRET || !REDIRECT_URI) {
     console.log("Populating credentials...");
-    const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
-    DROPBOX_APP_KEY = credentials.DROPBOX_APP_KEY;
-    DROPBOX_APP_SECRET = credentials.DROPBOX_APP_SECRET;
-    REDIRECT_URI = credentials.REDIRECT_URI;
+    
+    try {
+      const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
+      DROPBOX_APP_KEY = credentials.DROPBOX_APP_KEY;
+      DROPBOX_APP_SECRET = credentials.DROPBOX_APP_SECRET;
+      REDIRECT_URI = credentials.REDIRECT_URI;
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new Error(`Credentials file not found at path: ${CREDENTIALS_PATH}`);
+      } else {
+        throw new Error(`Error reading credentials: ${error.message}`);
+      }
+    }
   } else {
     console.log("Using existing credentials");
   }
