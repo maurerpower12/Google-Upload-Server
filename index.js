@@ -12,6 +12,7 @@ const {
   authorizeDropbox,
   dropboxCallback,
 } = require("./dropboxApi");
+const fs = require("fs");
 
 const app = express();
 const port = 3000;
@@ -121,8 +122,6 @@ app.get("/auth/google/callback", async (req, res) => {
 app.get("/auth/dropbox/callback", async (req, res) => {
   dropboxCallback(req, res);
 });
-
-
 
 function ensureDirectoryExists(dirPath) {
   // Check if the directory exists
