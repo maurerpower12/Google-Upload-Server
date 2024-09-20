@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const { Dropbox, DropboxAuth } = require("dropbox");
 const fetch = require("node-fetch");
-//const open = require('open');
 
 const TOKEN_PATH = "dropboxToken.json";
 const CREDENTIALS_PATH = path.join(__dirname, "dropboxCredentials.json");

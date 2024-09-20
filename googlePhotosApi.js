@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const { google } = require("googleapis");
 const Photos = require("googlephotos");
-const { openBrowser } = require("./Utilities");
 
 const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
 const TOKEN_PATH = "token.json";
@@ -36,7 +35,8 @@ async function authorize(code = null) {
       scope: SCOPES,
     });
     console.log("Authorize this app by visiting this url:", authUrl);
-    openBrowser(authUrl);
+    const open = (await import("open")).default;
+    await open(authUrl);
   }
 
   authClient = oAuth2Client;
