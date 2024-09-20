@@ -62,8 +62,9 @@ To work with remote providers (like Dropbox) there are files that need to be gen
 
 When the server boots - it needs premissions to upload content.
 1. A dropbox webpage should auto open
-2. You will need to hit "Continue"
-3. And then "Allow"
+2. You will need to hit "Continue"<img width="1532" alt="Screenshot 2024-09-19 at 11 32 05 PM" src="https://github.com/user-attachments/assets/e241dc22-2cb3-47e1-9fa7-5df2418fb9da">
+3. And then "Allow" <img width="1535" alt="Screenshot 2024-09-19 at 11 32 43 PM" src="https://github.com/user-attachments/assets/2f6202a0-5542-4ddf-8f99-31fb8ef205c6">
+
 
 ## Contributing
 
