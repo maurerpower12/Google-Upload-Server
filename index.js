@@ -47,6 +47,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage, preservePath: true });
 
 app.listen(port, async () => {
+  ensureDirectoryExists(uploadDir);
   switch (provider) {
     case backendOptions.GooglePhotos: {
       await authorize();
@@ -120,3 +121,16 @@ app.get("/auth/google/callback", async (req, res) => {
 app.get("/auth/dropbox/callback", async (req, res) => {
   dropboxCallback(req, res);
 });
+
+
+
+function ensureDirectoryExists(dirPath) {
+  // Check if the directory exists
+  if (!fs.existsSync(dirPath)) {
+    // If it doesn't exist, create the directory
+    fs.mkdirSync(dirPath, { recursive: true });
+    console.log(`Directory created at: ${dirPath}`);
+  } else {
+    console.log(`Directory already exists: ${dirPath}`);
+  }
+}
