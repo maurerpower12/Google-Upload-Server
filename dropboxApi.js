@@ -83,8 +83,9 @@ async function dropboxCallback(req, res) {
       response.result;
     dropbox.setRefreshToken(refreshToken);
 
-    // Save the access token for future use
-    fs.writeFileSync(TOKEN_PATH, JSON.stringify(response.result));
+    const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+    const newExpiresAt = currentTimeInSeconds + response.result.expires_in;
+    fs.writeFileSync(TOKEN_PATH, JSON.stringify({response: response.result, expires_at: newExpiresAt}));
 
     console.log("Access Token saved:", accessToken);
 
@@ -101,36 +102,34 @@ async function refreshTokenIfNeeded() {
   try {
     // Load token data from file (this contains access_token, refresh_token, expires_in, etc.)
     const tokenData = JSON.parse(fs.readFileSync(TOKEN_PATH, "utf-8"));
-    const { access_token, refresh_token, expires_in } = tokenData;
+    const { response, expires_at } = tokenData;
 
-    // Check if the token has expired
-    const currentTime = Math.floor(Date.now() / 1000);
-    if (currentTime >= expires_in) {
+    const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+    if (currentTimeInSeconds >= expires_at) {
       console.log("Access token expired. Refreshing token...");
 
       // Initialize DropboxAuth with client credentials
       const dropboxAuth = new DropboxAuth({
         clientId: DROPBOX_APP_KEY,
         clientSecret: DROPBOX_APP_SECRET,
-        refreshToken: refresh_token,
+        refreshToken: response.refresh_token,
         fetch,
       });
 
       // Request a new access token
-      const response = await dropboxAuth.refreshAccessToken();
-      const newAccessToken = response.result.access_token;
-      const newExpiresIn = response.result.expires_in;
+      const refreshResponse = await dropboxAuth.refreshAccessToken();
+      const newAccessToken = refreshResponse.result.access_token;
+      const newExpiresIn = refreshResponse.result.expires_in;
 
       // Calculate the new expiration time
-      const newExpiresAt = Math.floor(Date.now() / 1000) + newExpiresIn;
+      const newExpiresAt = currentTimeInSeconds + newExpiresIn;
 
       // Update the token data and save it back to the file
       const updatedTokenData = {
-        ...tokenData,
-        access_token: newAccessToken,
-        expires_in: newExpiresAt,
+        response: refreshResponse.result,
+        expires_at: newExpiresAt,
       };
-      fs.writeFileSync(TOKEN_PATH, JSON.stringify(updatedTokenData, null, 2));
+      fs.writeFileSync(TOKEN_PATH, JSON.stringify(updatedTokenData));
 
       console.log(
         "Token refreshed successfully. New access token:",
@@ -141,7 +140,7 @@ async function refreshTokenIfNeeded() {
       return newAccessToken;
     } else {
       console.log("Access token is still valid.");
-      return access_token; // Return the current access token if it hasn't expired
+      return response.access_token; // Return the current access token if it hasn't expired
     }
   } catch (error) {
     console.error("Error refreshing token:", error);
