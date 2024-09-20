@@ -112,3 +112,4 @@ dropboxToken.json
 
 #uploads folder
 /uploads
+dropboxCredentials.json

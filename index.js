@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { authorize, uploadToGooglePhotos, listAlbums, getAlbumName, callback } = require('./googlePhotosApi');
-const { initializeDropboxClient, uploadToDropbox } = require('./dropboxApi');
+const { uploadToDropbox, authorizeDropbox, dropboxCallback } = require('./dropboxApi');
 
 const app = express();
 const port = 3000;
@@ -42,7 +42,7 @@ app.listen(port, async () => {
       await authorize();
     }
     case backendOptions.Dropbox: {
-      await initializeDropboxClient();
+      await authorizeDropbox();
     }
   }
   console.log(`Server listening on port http://localhost:${port}`);
@@ -100,4 +100,8 @@ app.get('/api/listAllAlbums', async (req, res) => {
 
 app.get('/auth/google/callback', async (req, res) => {
   callback(req, res);
+});
+
+app.get('/auth/dropbox/callback', async (req, res) => {
+  dropboxCallback(req, res);
 });
