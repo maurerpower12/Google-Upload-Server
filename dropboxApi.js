@@ -140,7 +140,9 @@ async function refreshTokenIfNeeded() {
   try {
     const { response, expires_at } = TOKEN_DATA;
 
-    if (!checkTokenValidity(response.access_token)) {
+    // Check if the token has expired by comparing expiration time
+    const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+    if (currentTimeInSeconds >= expires_at) {
       console.log("Access token expired. Refreshing token...");
 
       // Initialize DropboxAuth with client credentials
@@ -157,7 +159,6 @@ async function refreshTokenIfNeeded() {
       const newExpiresIn = refreshResponse.result.expires_in;
 
       // Calculate the new expiration time
-      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
       const newExpiresAt = currentTimeInSeconds + newExpiresIn;
 
       // Update the token data and save it back to the file
