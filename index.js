@@ -67,9 +67,9 @@ app.get("/api/healthcheck", (req, res) => {
 app.post("/api/upload", upload.single("photo"), async (req, res) => {
   console.log("[UPLOAD API] called: ", req.body);
 
-  if (req.body.uploadToRemote === 'false') {
+  if (req.body.uploadToRemote === "false") {
     console.log("Uploaded to middleware: ", req.file);
-    res.status(200).json({ success: true});
+    res.status(200).json({ success: true });
     return;
   }
 

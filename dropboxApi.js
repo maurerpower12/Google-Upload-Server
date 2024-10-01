@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { Dropbox, DropboxAuth } = require("dropbox");
 const fetch = require("node-fetch");
+const { shortenUrl } = require("./tinyURL");
 
 const TOKEN_PATH = "dropboxToken.json";
 const CREDENTIALS_PATH = path.join(__dirname, "dropboxCredentials.json");
@@ -37,11 +38,13 @@ async function uploadToDropbox(filePath) {
 async function getShareableLinkToFile(dropbox, dropboxPath) {
   try {
     const response = await dropbox.sharingCreateSharedLinkWithSettings({
-      path: dropboxPath
+      path: dropboxPath,
     });
 
     console.log("Link to file:", response.result.url);
-    return response.result.url;
+    const shortLink = await shortenUrl(response.result.url);
+    console.log("Short Link to file:", shortLink);
+    return shortLink;
   } catch (err) {
     console.error("Failed to get file link:", err);
     return ""; // TODO: Maybe return a generic link here?
@@ -209,15 +212,17 @@ async function checkTokenValidity(accessToken) {
 async function populateCredentials() {
   if (!DROPBOX_APP_KEY || !DROPBOX_APP_SECRET || !REDIRECT_URI) {
     console.log("Populating credentials...");
-    
+
     try {
       const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
       DROPBOX_APP_KEY = credentials.DROPBOX_APP_KEY;
       DROPBOX_APP_SECRET = credentials.DROPBOX_APP_SECRET;
       REDIRECT_URI = credentials.REDIRECT_URI;
     } catch (error) {
-      if (error.code === 'ENOENT') {
-        throw new Error(`Credentials file not found at path: ${CREDENTIALS_PATH}`);
+      if (error.code === "ENOENT") {
+        throw new Error(
+          `Credentials file not found at path: ${CREDENTIALS_PATH}`,
+        );
       } else {
         throw new Error(`Error reading credentials: ${error.message}`);
       }
