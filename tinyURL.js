@@ -24,7 +24,7 @@ const shortenUrl = async (longUrl) => {
         }
     } catch (error) {
         // In case of network or other errors, also return the long URL
-        console.error('Error occurred:', error);
+        console.error('Error occurred trying to use TinyUrl - using long url:', error);
         return longUrl;
     }
 };
