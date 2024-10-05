@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const { Dropbox, DropboxAuth } = require("dropbox");
 const fetch = require("node-fetch");
-const { shortenUrl } = require("./tinyURL");
 
 const TOKEN_PATH = "dropboxToken.json";
 const CREDENTIALS_PATH = path.join(__dirname, "dropboxCredentials.json");
@@ -42,9 +41,7 @@ async function getShareableLinkToFile(dropbox, dropboxPath) {
     });
 
     console.log("Link to file:", response.result.url);
-    const shortLink = await shortenUrl(response.result.url);
-    console.log("Short Link to file:", shortLink);
-    return shortLink;
+    return response.result.url;
   } catch (err) {
     console.error("Failed to get file link:", err);
     return ""; // TODO: Maybe return a generic link here?
@@ -56,12 +53,14 @@ async function initializeDropboxClient() {
   if (fs.existsSync(TOKEN_PATH)) {
     const savedToken = fs.readFileSync(TOKEN_PATH, "utf8");
     const obj = JSON.parse(savedToken);
-    if (checkTokenValidity(obj.response.access_token) === true) {
+
+    if (obj.response.access_token) {
       TOKEN_DATA = obj;
       return true;
     } else {
       return false;
     }
+    return true;
   } else {
     return false;
   }
@@ -71,8 +70,9 @@ async function initializeDropboxClient() {
 async function authorizeDropbox(req, res) {
   try {
     await populateCredentials();
-    const cachedToken = initializeDropboxClient();
-    if (cachedToken === true) {
+    const alreadyAuthenticated = await initializeDropboxClient();
+    if (alreadyAuthenticated === true) {
+      await refreshTokenIfNeeded();
       return;
     }
 
@@ -143,6 +143,9 @@ async function refreshTokenIfNeeded() {
   try {
     const { response, expires_at } = TOKEN_DATA;
 
+    const expirationDate = new Date(expires_at * 1000); 
+    console.log("Token Expires at: " + expirationDate.toString());
+
     // Check if the token has expired by comparing expiration time
     const currentTimeInSeconds = Math.floor(Date.now() / 1000);
     if (currentTimeInSeconds >= expires_at) {
@@ -152,21 +155,22 @@ async function refreshTokenIfNeeded() {
       const dropboxAuth = new DropboxAuth({
         clientId: DROPBOX_APP_KEY,
         clientSecret: DROPBOX_APP_SECRET,
-        refreshToken: response.refresh_token,
         fetch,
       });
+      dropboxAuth.setRefreshToken(response.refresh_token);
 
       // Request a new access token
-      const refreshResponse = await dropboxAuth.refreshAccessToken();
-      const newAccessToken = refreshResponse.result.access_token;
-      const newExpiresIn = refreshResponse.result.expires_in;
+      await dropboxAuth.refreshAccessToken();
+      let newAccessToken = dropboxAuth.accessToken;
+      response.access_token = newAccessToken;
+      const newExpiresIn = response.expires_in;
 
       // Calculate the new expiration time
       const newExpiresAt = currentTimeInSeconds + newExpiresIn;
 
       // Update the token data and save it back to the file
       TOKEN_DATA = {
-        response: refreshResponse.result,
+        response: response,
         expires_at: newExpiresAt,
       };
       fs.writeFileSync(TOKEN_PATH, JSON.stringify(TOKEN_DATA));
@@ -184,27 +188,6 @@ async function refreshTokenIfNeeded() {
     }
   } catch (error) {
     console.error("Error refreshing token:", error);
-  }
-}
-
-// Function to check if the access token is still valid by making a simple API call
-async function checkTokenValidity(accessToken) {
-  const dropbox = new Dropbox({
-    accessToken: accessToken,
-    fetch: fetch,
-  });
-
-  try {
-    // Make an API call to get the current account information
-    const response = await dropbox.usersGetCurrentAccount();
-    return true;
-  } catch (error) {
-    if (error.status === 401) {
-      console.log("Access token is invalid or expired.");
-    } else {
-      console.log("An error occurred:", error);
-    }
-    return false;
   }
 }
 
