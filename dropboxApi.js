@@ -143,7 +143,7 @@ async function refreshTokenIfNeeded() {
   try {
     const { response, expires_at } = TOKEN_DATA;
 
-    const expirationDate = new Date(expires_at * 1000); 
+    const expirationDate = new Date(expires_at * 1000);
     console.log("Token Expires at: " + expirationDate.toString());
 
     // Check if the token has expired by comparing expiration time
@@ -175,10 +175,7 @@ async function refreshTokenIfNeeded() {
       };
       fs.writeFileSync(TOKEN_PATH, JSON.stringify(TOKEN_DATA));
 
-      console.log(
-        "Token refreshed successfully. New access token:",
-        newAccessToken,
-      );
+      console.log("Token refreshed successfully.");
 
       // Return the new access token to be used in subsequent API calls
       return newAccessToken;
