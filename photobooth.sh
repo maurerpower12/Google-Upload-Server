@@ -5,7 +5,7 @@ SERVER_PORT=3000                              # Replace with your server's port
 NODE_SERVER_PATH="/Documents/GitHub/Photobooth-Backend" # Path to your Node.js server
 ELECTRON_APP_PATH="/Documents/GitHub/Photobooth" # Path to your Electron app
 MAX_RETRIES=5                                 # Maximum number of retries for server start
-RETRY_INTERVAL=3                              # Time (in seconds) between retries
+RETRY_INTERVAL=60                              # Time (in seconds) between retries
 PING_HOST="8.8.8.8"                           # External server to check internet (Google DNS)
 
 # ANSI color codes
@@ -41,7 +41,7 @@ check_server_started() {
   echo "Waiting for server to start on port $SERVER_PORT..."
   until nc -z localhost $SERVER_PORT || [ $retries -eq $MAX_RETRIES ]; do
     retries=$((retries + 1))
-    echo -e "${RED}Retry $retries/$MAX_RETRIES: Server not ready yet. Retrying in $RETRY_INTERVAL seconds...${NC}"
+    echo -e "${RED}Retry $retries/$MAX_RETRIES: Server not ready yet...${NC}"
     sleep $RETRY_INTERVAL
   done
 
@@ -57,14 +57,14 @@ check_server_started() {
 start_node_server() {
   echo "Starting Node.js server..."
   cd "$NODE_SERVER_PATH" || { echo -e "${RED}Error: Failed to navigate to Node.js server directory.${NC}"; exit 1; }
-  npm start &  # Starts the Node.js server in the background
+  npm start # Starts the Node.js server
 }
 
 # Start Electron app
 start_electron_app() {
   echo "Starting Electron app..."
   cd "$ELECTRON_APP_PATH" || { echo -e "${RED}Error: Failed to navigate to Electron app directory.${NC}"; exit 1; }
-  npm start &  # Start Electron app in the background
+  npm start  # Start Electron app
   sleep 5  # Wait for the Electron app to start
   echo -e "${GREEN}Electron app successfully started.${NC}"
 }
