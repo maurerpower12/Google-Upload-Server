@@ -5,6 +5,7 @@ const fetch = require("node-fetch");
 
 const TOKEN_PATH = "dropboxToken.json";
 const CREDENTIALS_PATH = path.join(__dirname, "dropboxCredentials.json");
+const DROPBOX_UPLOAD_PATH = "/";
 
 // Varaibles can be found in dropboxCredentials json file
 let DROPBOX_APP_KEY;
@@ -22,7 +23,7 @@ async function uploadToDropbox(filePath) {
 
     // Upload the file to the root of Dropbox or to a specified folder
     const response = await dropboxClient.filesUpload({
-      path: "/" + fileName, // Upload file to the root of Dropbox
+      path: DROPBOX_UPLOAD_PATH + fileName,
       contents: fileContent,
     });
 
@@ -30,10 +31,11 @@ async function uploadToDropbox(filePath) {
     return getShareableLinkToFile(dropboxClient, "/" + fileName);
   } catch (err) {
     console.error("Failed to upload file:", err.message);
-    return "";
+    return undefined;
   }
 }
 
+// Gets a sharable link to a file
 async function getShareableLinkToFile(dropbox, dropboxPath) {
   try {
     const response = await dropbox.sharingCreateSharedLinkWithSettings({
@@ -44,7 +46,7 @@ async function getShareableLinkToFile(dropbox, dropboxPath) {
     return response.result.url;
   } catch (err) {
     console.error("Failed to get file link:", err);
-    return ""; // TODO: Maybe return a generic link here?
+    return undefined;
   }
 }
 
@@ -110,7 +112,6 @@ async function dropboxCallback(req, res) {
       throw new Error("No authorization code found.");
     }
 
-    // Use the code to exchange for an access token
     const dropbox = new DropboxAuth({
       clientId: DROPBOX_APP_KEY,
       clientSecret: DROPBOX_APP_SECRET,
@@ -127,13 +128,13 @@ async function dropboxCallback(req, res) {
     TOKEN_DATA = { response: response.result, expires_at: newExpiresAt };
     fs.writeFileSync(TOKEN_PATH, JSON.stringify(TOKEN_DATA));
 
-    console.log("Access Token saved:", accessToken);
+    console.log("Access Token saved");
 
-    res.send("Authentication successful! You can close this window.");
+    res.send("Authentication successful! You can close this window. ✅");
     console.log("Authentication successful");
   } catch (error) {
     console.error("Error during authentication Callback:", error);
-    res.status(500).send("Authentication Callback failed. Please try again.");
+    res.status(500).send("Authentication Callback failed. Please try again. ❌");
   }
 }
 
