@@ -60,7 +60,6 @@ async function initializeDropboxClient() {
     } else {
       return false;
     }
-    return true;
   } else {
     return false;
   }
