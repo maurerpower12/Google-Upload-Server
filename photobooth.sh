@@ -2,10 +2,10 @@
 
 # Constants
 SERVER_PORT=3000                              # Replace with your server's port
-NODE_SERVER_PATH="/Documents/GitHub/Photobooth-Backend" # Path to your Node.js server
-ELECTRON_APP_PATH="/Documents/GitHub/Photobooth" # Path to your Electron app
-MAX_RETRIES=5                                 # Maximum number of retries for server start
-RETRY_INTERVAL=60                              # Time (in seconds) between retries
+NODE_SERVER_PATH="/Users/josephmaurer/Documents/GitHub/Photobooth-Backend" # Path to your Node.js server
+ELECTRON_APP_PATH="/Users/josephmaurer/Documents/GitHub/Photobooth" # Path to your Electron app
+MAX_RETRIES=120                                 # Maximum number of retries for server start
+RETRY_INTERVAL=1                              # Time (in seconds) between retries
 PING_HOST="8.8.8.8"                           # External server to check internet (Google DNS)
 
 # ANSI color codes
@@ -40,9 +40,9 @@ check_server_started() {
   local retries=0
   echo "Waiting for server to start on port $SERVER_PORT..."
   until nc -z localhost $SERVER_PORT || [ $retries -eq $MAX_RETRIES ]; do
-    retries=$((retries + 1))
-    echo -e "${RED}Retry $retries/$MAX_RETRIES: Server not ready yet...${NC}"
     sleep $RETRY_INTERVAL
+    retries=$((retries + 1))
+    echo -e "${YELLOW}Retry $retries/$MAX_RETRIES: Server not ready yet...${NC}"
   done
 
   if [ $retries -eq $MAX_RETRIES ]; then
@@ -57,7 +57,24 @@ check_server_started() {
 start_node_server() {
   echo "Starting Node.js server..."
   cd "$NODE_SERVER_PATH" || { echo -e "${RED}Error: Failed to navigate to Node.js server directory.${NC}"; exit 1; }
-  npm start # Starts the Node.js server
+  npm start &  # Starts the Node.js server in the background
+  NODE_PID=$!  # Capture the process ID of the Node.js server
+  echo -e "${GREEN}Node.js server started with PID $NODE_PID.${NC}"
+}
+
+# Function to start the Node.js server
+start_node_server() {
+  if nc -z localhost $SERVER_PORT; then
+    echo -e "${YELLOW}Node.js server is already running. Skipping...${NC}"
+  else
+    # Start the server if not running
+    echo "Starting Node.js server..."
+    cd "$NODE_SERVER_PATH" || { echo -e "${RED}Error: Failed to navigate to Node.js server directory.${NC}"; exit 1; }
+    npm start &  # Starts the Node.js server in the background
+    NODE_PID=$!  # Capture the process ID of the Node.js server
+    echo $NODE_PID > "$PID_FILE"  # Save the PID to a file
+    echo -e "${GREEN}Node.js server started with PID $NODE_PID.${NC}"
+  fi
 }
 
 # Start Electron app
