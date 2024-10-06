@@ -7,6 +7,7 @@ ELECTRON_APP_PATH="/Users/josephmaurer/Documents/GitHub/Photobooth" # Path to yo
 MAX_RETRIES=120                                 # Maximum number of retries for server start
 RETRY_INTERVAL=1                              # Time (in seconds) between retries
 PING_HOST="8.8.8.8"                           # External server to check internet (Google DNS)
+VOLUME_LEVEL=100                              # Desired volume 
 
 # ANSI color codes
 RED='\033[0;31m'
@@ -96,7 +97,10 @@ check_internet_connection
 start_node_server
 check_server_started  # Automatically assumes authentication is successful if the server starts
 
-# 3. Start the Electron app
+#3. Set volume to max
+osascript -e "set volume output volume $VOLUME_LEVEL"
+
+# 4. Start the Electron app
 start_electron_app
 
 echo -e "${GREEN}All processes started successfully. Exiting.${NC}"
