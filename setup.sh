@@ -70,7 +70,7 @@ start_node_server() {
     echo -e "${YELLOW}Node.js server is already running. Skipping...${NC}"
   else
     # Start the server if not running
-    echo "Starting Node.js server..."
+    echo "Starting Node.js server @ $NODE_SERVER_PATH..."
     cd "$NODE_SERVER_PATH" || { echo -e "${RED}Error: Failed to navigate to Node.js server directory.${NC}"; exit 1; }
     npm start &  # Starts the Node.js server in the background
     NODE_PID=$!  # Capture the process ID of the Node.js server
@@ -81,7 +81,7 @@ start_node_server() {
 
 # Start Electron app
 start_electron_app() {
-  echo "Starting Electron app..."
+  echo "Starting Electron app @ $ELECTRON_APP_PATH"
   cd "$ELECTRON_APP_PATH" || { echo -e "${RED}Error: Failed to navigate to Electron app directory.${NC}"; exit 1; }
   npm start  # Start Electron app
   sleep 5  # Wait for the Electron app to start
