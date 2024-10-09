@@ -2,8 +2,9 @@
 
 # Constants
 SERVER_PORT=3000                              # Replace with your server's port
-NODE_SERVER_PATH="/Users/josephmaurer/Documents/GitHub/Photobooth-Backend" # Path to your Node.js server
-ELECTRON_APP_PATH="/Users/josephmaurer/Documents/GitHub/Photobooth" # Path to your Electron app
+SCRIPT_DIR="$(cd "$(dirname "$0")"/.. && pwd)"
+NODE_SERVER_PATH="$SCRIPT_DIR/Photobooth-Backend" # Path to your Node.js server
+ELECTRON_APP_PATH="$SCRIPT_DIR/Photobooth" # Path to your Electron app
 MAX_RETRIES=120                                 # Maximum number of retries for server start
 RETRY_INTERVAL=1                              # Time (in seconds) between retries
 PING_HOST="8.8.8.8"                           # External server to check internet (Google DNS)
